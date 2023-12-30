@@ -135,4 +135,4 @@ async def on_reaction_add(reaction, user):
                 print(e)
 
 # Run the bot with your token
-bot.run('MTE3ODU5MTYyNjAzNDE1MTQ2NA.Gt0jOp.uO2PKTdLGR7rnfYsfKqVWcwH5eHuWK2lvkajcI')
+bot.run('bot token goes here')
