@@ -1,0 +1,9 @@
+asyncio
+discord.py
+youtube-search-python
+pytube
+pydub
+configparser
+hashlib
+selenium
+requests
