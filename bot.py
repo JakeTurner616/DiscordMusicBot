@@ -90,7 +90,7 @@ async def on_reaction_add(reaction, user):
                 print(f"mp3 path: {mp3_path}")
 
                 # Run MusicBrainz Picard operations with delays
-                picard_path = r"C:\Users\jaked\Documents\picard-bot\MusicBrainz-Picard-2.10.exe"  # Replace with the correct path
+                picard_path = r"C:\Users\jaked\Documents\picard-bot\MusicBrainz-Picard-latest.exe"  # Replace with the correct path
 
 
                 # Construct the command as a list of arguments
