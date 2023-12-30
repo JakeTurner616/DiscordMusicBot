@@ -1,6 +1,6 @@
 asyncio
 discord.py
-youtube-search-python
+youtube_search
 pytube
 pydub
 configparser
