@@ -1,25 +1,34 @@
 import asyncio
 import os
 import re
-import shutil
 import subprocess
 import discord
 from discord.ext import commands
 from youtube_search import YoutubeSearch
 from pytube import YouTube
 from pydub import AudioSegment # for .mp3 conversion
+import configparser  # Import the configparser module
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+bot_prefix = config.get('Bot', 'Prefix')
 
 intents = discord.Intents.default()
 intents.message_content = True
 # Set up the bot with a command prefix
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix=bot_prefix, intents=intents)
 
-picard_path = r'/MusicBrainz-Picard-2.10.exe'  # Replace with the actual path
 
 # Sanitize function to replace invalid characters
 def sanitize_filename(filename):
     invalid_chars = r'<>:"/\|?*'
     return ''.join(c if c not in invalid_chars else '_' for c in filename)
+
+@bot.event
+async def on_ready():
+    print('We have logged in as {0.user}'.format(bot))
+    print("-------")
+
 
 # Command to search for YouTube videos
 @bot.command(name='search')
@@ -62,77 +71,39 @@ async def on_reaction_add(reaction, user):
 
             # Download audio using pytube
             try:
-                # Create the directory only if it does not exist
-                if not os.path.exists("/Temp"):
-                    try:
-                        # Create the directory if it doesn't exist
-                        os.makedirs("/Temp")
-                        print(f"Directory '/Temp' created.")
-                    except OSError as e:
-                        # Handle the exception if the directory creation fails
-                        print(f"Error: {e}")
-                else:
-                    print(f"Directory '/Temp' already exists.")
-
-
                 yt = YouTube(selected_result)
+                audio_stream = yt.streams.filter(only_audio=True).first()
                 sanitized_title = sanitize_filename(yt.title)
-                audio_path = f'Temp/{sanitized_title}'  # Let pytube handle the file extension
-                yt.streams.first().download(output_path='Temp', filename=sanitized_title)
+                audio_path = f'Temp/{sanitized_title}'
+                audio_stream.download(output_path='Temp', filename=sanitized_title)
                 print(f"Audio downloaded for user {user}: {yt.title}")
 
-                # Wait for a short duration to ensure the file is fully downloaded
-                await asyncio.sleep(5)  # You can adjust the duration based on your requirements
-
-                # Convert to .mp3 using pydub
-                mp3_filename = f"{sanitized_title}.mp3"
-                mp3_path = os.path.abspath(os.path.join('Temp', mp3_filename))
-                audio = AudioSegment.from_file(os.path.abspath(audio_path), format="mp4")
+                # Convert to .mp3 using pydub from null extension
+                audio = AudioSegment.from_file(audio_path, format="mp4")
+                mp3_path = f'Temp/{sanitized_title}.mp3'
                 audio.export(mp3_path, format="mp3")
                 print(f"Audio converted to mp3 for user {user}: {yt.title}")
 
-                # Remove the original downloaded file using the absolute path
-                os.remove(os.path.abspath(audio_path))
+                # Remove the original null extension file
+                os.remove(audio_path)
 
-                picard_executable = r"MusicBrainz-Picard-2.10.exe"
+                print(f"mp3 path: {mp3_path}")
 
-                def load_and_cluster(file_path):
-
-                    # Load the file into MusicBrainz Picard
-                    cluster = subprocess.run([picard_executable, file_path])
-
-                def save():
-                    subprocess.run([f"{picard_executable} -e SAVE_MATCHED; QUIT"])
-
-                    
-                folder_path = "Temp"
-                extension = ".mp3"
-
-                # Get a list of all files in the Temp folder
-                files_in_folder = os.listdir(folder_path)
-
-                # Filter the list to include only files with the specified extension
-                mp3_files = [file for file in files_in_folder if file.endswith(extension)]
-
-                # Check if there are any .mp3 files in the folder
-                if mp3_files:
-                    # If there are, choose the first one (you can modify this logic based on your requirements)
-                    file_path = os.path.join(folder_path, mp3_files[0])
-                    print("Found .mp3 file:", file_path)
-                else:
-                    print("No .mp3 files found in the Temp folder")
-
-                # Load and cluster the file with MusicBrainz Picard
-                load_and_cluster(file_path)
-                save()
-
-                shutil.rmtree("/Temp")
+                # Run MusicBrainz Picard operations with delays
+                picard_path = r"C:\Users\jaked\Documents\picard-bot\MusicBrainz-Picard-2.10.exe"  # Replace with the correct path
 
 
-            
+                # Construct the command as a list of arguments
+                command = [picard_path, "-e", "LOAD", mp3_path, "-e", "SAVE_MATCHED", "-e", "QUIT"]
+
+                # Use subprocess.run to execute the command
+                subprocess.run(command)
+                await asyncio.sleep(2)  # Adjust the sleep duration as needed
 
             except Exception as e:
-                print(e)
+                print(f"Error downloading, converting, and processing audio for user {user}: {str(e)}")
 
 # Run the bot with your token
-bot.run('bot token goes here')
+bot_token = config.get('Bot', 'Token')
+
+bot.run(bot_token)
