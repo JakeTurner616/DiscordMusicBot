@@ -1,7 +1,10 @@
 # DiscordMusicBot
 
-## Introduction
+## Overview
 DiscordMusicBot is a very simple Discord bot that allows users to easily download and tag music directly to a shared location. It utilizes the discord.py library for interacting with the Discord API, as well as other libraries such as youtube_search, pytube, and pydub for handling YouTube searches and audio processing. Additionally, the bot leverages MusicBrainz Picard to enhance the downloaded audio files by automatically clustering and tagging them with accurate metadata.
+
+## Binary Downloader
+[musicbrainz-binary-downloader.py](https://github.com/JakeTurner616/DiscordMusicBot/blob/main/musicbrainz-binary-downloader.py) can be optionally used to automate the process of downloading the latest MusicBrainz Picard binary from the official download page and verifies its integrity using an MD5 hash.
 
 ## Features
 1. **YouTube Search:** Users can search for YouTube videos using the `!search` command. The bot will display the top 5 search results, and users can select a video by reacting to the message with a corresponding number emoji.
