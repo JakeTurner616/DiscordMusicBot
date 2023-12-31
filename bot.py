@@ -49,73 +49,90 @@ async def search(ctx, *, query):
     for i in range(1, 6):
         await message.add_reaction(f"{i}\U0000FE0F\U000020E3")
 
-# Event listener for reaction added
 @bot.event
 async def on_reaction_add(reaction, user):
-    # Check if the reaction is from the bot or a DM
     if user.bot or not isinstance(reaction.emoji, str):
         return
     expected_emojis = [f"{i}\U0000FE0F\U000020E3" for i in range(1, 6)]
-
-    # Debug statement to print user and emoji information (useful to see if our on_reaction event is firing)
     print(f"{user} reacted with {reaction.emoji}")
 
     if reaction.emoji not in expected_emojis:
-        # Ignore reactions that are not part of the expected choices
         return
-    # Use regular expression to extract numeric part of the emoji
-    match = re.match(r'^(\d+)\U0000FE0F\U000020E3$', reaction.emoji)
-    if match:
-        result_index = int(match.group(1)) - 1
 
-        # Get the message that contains the search results
-        message = reaction.message
+    try:
+        # Show typing indicator
+        async with reaction.message.channel.typing():
+            processing_embed = discord.Embed(
+                title=f"Downloading video #{reaction.emoji} added by {user}.",
+                description=f"Youtube video is now downloading.",
+                color=discord.Color.blue()
+            )
+            processing_message = await reaction.message.channel.send(embed=processing_embed)
 
-        # Check if the message is the search result message
-        if message.embeds and message.embeds[0].title == "YouTube Search Results":
-            # Get the link of the selected result
-            selected_result = message.embeds[0].fields[result_index].value
+            # Delete the search results embed
+            await reaction.message.delete()
 
-            # Download audio using pytube
-            try:
-                yt = YouTube(selected_result)
-                audio_stream = yt.streams.filter(only_audio=True).first()
-                sanitized_title = sanitize_filename(yt.title)
-                audio_path = os.path.join('Temp', sanitized_title)
-                audio_stream.download(output_path='Temp', filename=sanitized_title)
-                print(f"Audio downloaded for user {user}: {yt.title}")
+            match = re.match(r'^(\d+)\U0000FE0F\U000020E3$', reaction.emoji)
+            if match:
+                result_index = int(match.group(1)) - 1
+                message = reaction.message
 
-                # Convert to .mp3 using pydub from null extension
-                audio = AudioSegment.from_file(audio_path, format="mp4")
-                mp3_path = f'Temp/{sanitized_title}.mp3'
-                audio.export(mp3_path, format="mp3")
-                print(f"Audio converted to mp3 for user {user}: {yt.title}")
+                if message.embeds and message.embeds[0].title == "YouTube Search Results":
+                    try:
+                        selected_result = message.embeds[0].fields[result_index].value
+                        yt = YouTube(selected_result)
+                        asyncio.sleep(2) # Given a short video, the download is nearly instantaneous. Therefore, we can use a short time delay; otherwise, this embed is essentially pointless as it switches too quickly to read.
+                        # Update the embed to indicate downloading progress
+                        processing_embed.title = "Converting audio to mp3..."
+                        processing_embed.description = f"Downloading {yt.title} added by {user}."
+                        await processing_message.edit(embed=processing_embed)
 
-                # Remove the original null extension file
-                os.remove(audio_path)
+                        audio_stream = yt.streams.filter(only_audio=True).first()
+                        sanitized_title = sanitize_filename(yt.title)
+                        audio_path = os.path.join('Temp', sanitized_title)
+                        audio_stream.download(output_path='Temp', filename=sanitized_title)
+                        print(f"Audio downloaded for user {user}: {yt.title}")
 
-                print(f"mp3 path: {mp3_path}")
+                        audio = AudioSegment.from_file(audio_path, format="mp4")
+                        mp3_path = f'Temp/{sanitized_title}.mp3'
+                        audio.export(mp3_path, format="mp3")
+                        print(f"Audio converted to mp3 for user {user}: {yt.title}")
 
-                # Set the path to the system specific MusicBrainz binary
-                picard_raw_path = config.get('Bot', 'picard_path')
-                picard_path = picard_raw_path
+                        os.remove(audio_path)
 
-                # Construct the command as a list of arguments
-                command = [picard_path, "-e", "LOAD", mp3_path, "-e", "SAVE_MATCHED", "-e", "QUIT"]
+                        picard_raw_path = config.get('Bot', 'picard_path')
+                        picard_path = picard_raw_path
 
-                # Use subprocess.run to execute the command
-                subprocess.run(command)
-                await asyncio.sleep(2)  # Adjust the sleep duration as needed
+                        # Update the embed to indicate it is being sent to picard
+                        processing_embed.title = "Conversion complete. Sending to picard..."
+                        processing_embed.description = f"Sending {yt.title} to picard added by {user}."
+                        await processing_message.edit(embed=processing_embed)
 
-            except Exception as e:
-                print(f"Error downloading, converting, and processing audio for user {user}: {str(e)}")
-            else:
-                # No exceptions occurred so we can probably assume that the download and conversion were successful
-                download_embed = discord.Embed(
-                    title=f"Download completed for {yt.title}",
-                    color=discord.Color.green()
-                )
-                await message.channel.send(embed=download_embed)  # Use message.channel.send instead of ctx.send
+                        command = [picard_path, "-e", "LOAD", mp3_path, "-e", "SAVE_MATCHED", "-e", "QUIT"]
+                        subprocess.run(command)
+                        await asyncio.sleep(2)
+
+                        # Update the embed to indicate completion
+                        processing_embed.title = f"Download completed for {yt.title}"
+                        processing_embed.description = "The audio has been successfully downloaded and processed."
+                        processing_embed.color = discord.Color.green()
+                        await processing_message.edit(embed=processing_embed)
+
+                    except Exception as e:
+                        print(f"Error downloading, converting, and processing audio for user {user}: {str(e)}")
+                        # Update the embed to indicate an error
+                        processing_embed.title = "Error processing your request"
+                        processing_embed.description = f"An error occurred: {str(e)}"
+                        processing_embed.color = discord.Color.red()
+                        await processing_message.edit(embed=processing_embed)
+
+                    finally:
+                        # After successful processing or in case of an error, clear unnecessary fields
+                        processing_embed.clear_fields()
+                        await processing_message.edit(embed=processing_embed)
+    finally:
+        # Clear reactions including the typing indicator
+        await processing_message.clear_reactions()
 
 # Run the bot with your token
 bot_token = config.get('Bot', 'Token')
