@@ -74,7 +74,7 @@ async def on_reaction_add(reaction, user):
                 yt = YouTube(selected_result)
                 audio_stream = yt.streams.filter(only_audio=True).first()
                 sanitized_title = sanitize_filename(yt.title)
-                audio_path = f'Temp/{sanitized_title}'
+                audio_path = os.path.join('Temp', sanitized_title)
                 audio_stream.download(output_path='Temp', filename=sanitized_title)
                 print(f"Audio downloaded for user {user}: {yt.title}")
 
