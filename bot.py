@@ -55,7 +55,14 @@ async def on_reaction_add(reaction, user):
     # Check if the reaction is from the bot or a DM
     if user.bot or not isinstance(reaction.emoji, str):
         return
+    expected_emojis = [f"{i}\U0000FE0F\U000020E3" for i in range(1, 6)]
 
+    # Debug statement to print user and emoji information (useful to see if our on_reaction event is firing)
+    print(f"{user} reacted with {reaction.emoji}")
+
+    if reaction.emoji not in expected_emojis:
+        # Ignore reactions that are not part of the expected choices
+        return
     # Use regular expression to extract numeric part of the emoji
     match = re.match(r'^(\d+)\U0000FE0F\U000020E3$', reaction.emoji)
     if match:
@@ -90,7 +97,7 @@ async def on_reaction_add(reaction, user):
                 print(f"mp3 path: {mp3_path}")
 
                 # Set the path to the system specific MusicBrainz binary
-                picard_raw_path = config.get('Bot', 'Picard_path')
+                picard_raw_path = config.get('Bot', 'picard_path')
                 picard_path = picard_raw_path
 
                 # Construct the command as a list of arguments
@@ -102,6 +109,13 @@ async def on_reaction_add(reaction, user):
 
             except Exception as e:
                 print(f"Error downloading, converting, and processing audio for user {user}: {str(e)}")
+            else:
+                # No exceptions occurred so we can probably assume that the download and conversion were successful
+                download_embed = discord.Embed(
+                    title=f"Download completed for {yt.title}",
+                    color=discord.Color.green()
+                )
+                await message.channel.send(embed=download_embed)  # Use message.channel.send instead of ctx.send
 
 # Run the bot with your token
 bot_token = config.get('Bot', 'Token')
