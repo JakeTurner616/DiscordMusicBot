@@ -25,6 +25,7 @@ To setup automatic file managment in Picard, begin by launching the MusicBrainz 
 
 ./MusicBrainz-Picard/Config.ini:
 ```Config.ini
+[setting]
 move_files=true
 move_files_to=C:\\Users\\jaked\\Music
 move_additional_files=true
