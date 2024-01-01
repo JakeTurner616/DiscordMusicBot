@@ -31,7 +31,41 @@ move_files_to=C:\\Users\\jaked\\Music
 move_additional_files=true
 move_additional_files_pattern=*.jpg *.png
 ```
+## Discord bot setup:
 
+1) Create a bot via the Discord [developer portal](https://discord.com/developers/applications) making sure to enable [message content intents](https://github.com/JakeTurner616/DiscordMusicDownloaderBot/blob/53890da027f6f958579dd4b7198f11483d196c00/docs/members_intent-285748459.png?raw=true) in the bot settings page.
+   
+3) Go to the OAuth URL generation page and give the bot the "bot" scope and all necessary permissions to send messages, reactions, embeds, read messages, embed links, and manage messages. Simply invite the bot to a server.
+## DiscordMusicDownloaderBot installation
+
+1) Clone and cd into the repo:
+  `git clone https://github.com/JakeTurner616/DiscordMusicDownloaderBot && cd DiscordMusicDownloaderBot`
+
+2) Setup a venv:
+  `python -m venv venv`
+
+3) Activate the DiscordMusicDownloaderBot venv:
+   
+    On Windows:
+     `.\venv\Scripts\activate`
+      
+    On macOS/Linux:
+      `source venv/bin/activate`
+
+4) Install the requirements:
+   `pip install -r requirements.txt`
+
+5) Customize local configuration values within `config.ini`:
+
+```DiscordMusicDownloaderBot/config.ini
+; Discord bot token
+Token = Replace_with_discord_bot_token
+; Bot command prefix
+Prefix = !
+; Use the official download page (https://picard.musicbrainz.org/downloads/)
+; Or use the musicbrainz-downloader.py script to download the appliation binary:
+Picard_path = ./MusicBrainz-Picard-latest.exe
+```
 
 ## TOS and legality Disclaimer
 DiscordMusicDownloaderBot is distributed on an "as-is" basis, and the user assumes full responsibility for its usage. While the bot facilitates the download and tagging of audio content from YouTube videos, users are unequivocally advised to adhere to all relevant legal regulations pertaining to content acquisition and distribution of non-copyleft media. Users are strongly encouraged to thoroughly review and comply with the terms and conditions of all required libraries, ensuring that their usage aligns with legal and subjective moral standards. DiscordMusicDownloaderBot is strictly intended for personal non-commercial use, and users are explicitly prohibited from engaging in any activities that involve the commercial exploitation or monetization of any of the bot's functionalities, particularly concerning the re-distribution of copyrighted, or proprietary music.
