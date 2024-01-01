@@ -111,12 +111,13 @@ async def on_reaction_add(reaction, user):
                         command = [picard_path, "-e", "LOAD", mp3_path, "-e", "SAVE_MATCHED", "-e", "QUIT"]
                         subprocess.run(command)
                         await asyncio.sleep(2)
-
+                        #delete the other embed
+                        await processing_message.delete()
                         # Update the embed to indicate completion
                         processing_embed.title = f"Download completed for {yt.title}"
                         processing_embed.description = "The audio has been successfully downloaded and processed."
                         processing_embed.color = discord.Color.green()
-                        await processing_message.edit(embed=processing_embed)
+                        processing_message = await reaction.message.channel.send(embed=processing_embed)
 
                     except Exception as e:
                         print(f"Error downloading, converting, and processing audio for user {user}: {str(e)}")
