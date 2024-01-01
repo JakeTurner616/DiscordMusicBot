@@ -81,7 +81,7 @@ async def on_reaction_add(reaction, user):
                     try:
                         selected_result = message.embeds[0].fields[result_index].value
                         yt = YouTube(selected_result)
-                        asyncio.sleep(2) # Given a short video, the download is nearly instantaneous. Therefore, we can use a short time delay; otherwise, this embed is essentially pointless as it switches too quickly to read.
+                        await asyncio.sleep(2) # Given a short video, the download is nearly instantaneous. Therefore, we can use a short time delay; otherwise, this embed is essentially pointless as it switches too quickly to read.
                         # Update the embed to indicate downloading progress
                         processing_embed.title = "Converting audio to mp3..."
                         processing_embed.description = f"Downloading {yt.title} added by {user}."
