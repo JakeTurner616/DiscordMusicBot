@@ -4,6 +4,5 @@ youtube_search
 pytube
 pydub
 configparser
-hashlib
 selenium
 requests
